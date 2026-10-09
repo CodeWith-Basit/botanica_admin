@@ -17,14 +17,19 @@ class DashboardScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Confirm Logout'),
-        content: const Text('Are you sure you want to sign out of the Admin panel?'),
+        content: const Text(
+          'Are you sure you want to sign out of the Admin panel?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Sign Out'),
           ),
@@ -111,9 +116,9 @@ class DashboardScreen extends StatelessWidget {
             // Real-time Overview Counters
             Text(
               'Live Overview',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
 
@@ -122,12 +127,19 @@ class DashboardScreen extends StatelessWidget {
                 // Product count stream
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance.collection('products').snapshots(),
+                    stream: FirebaseFirestore.instance
+                        .collection('products')
+                        .snapshots(),
                     builder: (context, snapshot) {
-                      final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                      final count = snapshot.hasData
+                          ? snapshot.data!.docs.length
+                          : 0;
                       return _buildSummaryChip(
                         title: 'Total Plants',
-                        value: snapshot.connectionState == ConnectionState.waiting ? '...' : '$count',
+                        value:
+                            snapshot.connectionState == ConnectionState.waiting
+                            ? '...'
+                            : '$count',
                         icon: Icons.local_florist,
                         color: Colors.green,
                       );
@@ -143,10 +155,15 @@ class DashboardScreen extends StatelessWidget {
                         .where('status', isEqualTo: 'Pending')
                         .snapshots(),
                     builder: (context, snapshot) {
-                      final pendingCount = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                      final pendingCount = snapshot.hasData
+                          ? snapshot.data!.docs.length
+                          : 0;
                       return _buildSummaryChip(
                         title: 'Pending Orders',
-                        value: snapshot.connectionState == ConnectionState.waiting ? '...' : '$pendingCount',
+                        value:
+                            snapshot.connectionState == ConnectionState.waiting
+                            ? '...'
+                            : '$pendingCount',
                         icon: Icons.pending_actions,
                         color: Colors.orange,
                       );
@@ -160,9 +177,9 @@ class DashboardScreen extends StatelessWidget {
             // Management Navigation Actions
             Text(
               'Management Hub',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 14),
 
@@ -181,19 +198,24 @@ class DashboardScreen extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const AddProductScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const AddProductScreen(),
+                      ),
                     );
                   },
                 ),
                 DashboardCardTile(
                   title: 'Manage Inventory',
-                  subtitle: 'Edit plant details, update prices, or remove products',
+                  subtitle:
+                      'Edit plant details, update prices, or remove products',
                   icon: Icons.inventory_2_outlined,
                   color: Colors.indigo,
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ManageProductsScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const ManageProductsScreen(),
+                      ),
                     );
                   },
                 ),
@@ -205,7 +227,9 @@ class DashboardScreen extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const OrdersScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const OrdersScreen(),
+                      ),
                     );
                   },
                 ),
@@ -244,7 +268,11 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 value,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
             ],
           ),

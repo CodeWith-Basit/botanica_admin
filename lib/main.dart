@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'firebase_options.dart';
 import 'screens/admin_login_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   // Ensure Flutter engine bindings are initialized before calling native Firebase plugins
@@ -30,22 +30,7 @@ class BotanicaAdminApp extends StatelessWidget {
     return MaterialApp(
       title: 'Botanica Admin',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2E7D32), // Emerald forest green
-          primary: const Color(0xFF2E7D32),
-          secondary: const Color(0xFF388E3C),
-        ),
-        textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
-        appBarTheme: const AppBarTheme(
-          elevation: 0,
-          centerTitle: true,
-          backgroundColor: Colors.transparent,
-          foregroundColor: Color(0xFF1B5E20),
-        ),
-        scaffoldBackgroundColor: const Color(0xFFF9FBF9),
-      ),
+      theme: AppTheme.lightTheme,
       // Automatically check authentication state:
       // If signed in -> DashboardScreen, otherwise -> AdminLoginScreen
       home: StreamBuilder<User?>(

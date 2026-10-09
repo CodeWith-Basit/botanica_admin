@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'admin_signup_screen.dart';
 import 'dashboard_screen.dart';
 
 // Screen where admins log into the management console
@@ -190,7 +191,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _loginAdmin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade800,
+                        backgroundColor: const Color(0xFF006E2F),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -214,6 +215,34 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                               ),
                             ),
                     ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Link to Sign Up Screen
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Don't have an admin account? ",
+                        style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AdminSignupScreen()),
+                          );
+                        },
+                        child: const Text(
+                          'Register Here',
+                          style: TextStyle(
+                            color: Color(0xFF006E2F),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
