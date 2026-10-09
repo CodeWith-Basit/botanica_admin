@@ -135,7 +135,7 @@ class DashboardScreen extends StatelessWidget {
                           ? snapshot.data!.docs.length
                           : 0;
                       return _buildSummaryChip(
-                        title: 'Total Plants',
+                        title: 'Total Products',
                         value:
                             snapshot.connectionState == ConnectionState.waiting
                             ? '...'
@@ -147,23 +147,45 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Pending orders count stream
+                // Pending orders count stream across all customer subcollections
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
-                        .collection('orders')
-                        .where('status', isEqualTo: 'Pending')
+                        .collectionGroup('orders')
                         .snapshots(),
                     builder: (context, snapshot) {
-                      final pendingCount = snapshot.hasData
-                          ? snapshot.data!.docs.length
-                          : 0;
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return _buildSummaryChip(
+                          title: 'Pending Orders',
+                          value: '...',
+                          icon: Icons.pending_actions,
+                          color: Colors.orange,
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return _buildSummaryChip(
+                          title: 'Pending Orders',
+                          value: '0',
+                          icon: Icons.pending_actions,
+                          color: Colors.orange,
+                        );
+                      }
+
+                      final docs = snapshot.data?.docs ?? [];
+                      // Count orders where status is 'Pending' (case-insensitive and trimmed)
+                      final pendingCount = docs.where((doc) {
+                        final data = doc.data() as Map<String, dynamic>?;
+                        final status = data?['status']
+                            ?.toString()
+                            .trim()
+                            .toLowerCase();
+                        return status == 'pending';
+                      }).length;
+
                       return _buildSummaryChip(
                         title: 'Pending Orders',
-                        value:
-                            snapshot.connectionState == ConnectionState.waiting
-                            ? '...'
-                            : '$pendingCount',
+                        value: '$pendingCount',
                         icon: Icons.pending_actions,
                         color: Colors.orange,
                       );
@@ -192,7 +214,8 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 DashboardCardTile(
                   title: 'Add New Product',
-                  subtitle: 'Add a new plant, set pricing, category, and photo',
+                  subtitle:
+                      'Add a new product, set pricing, category, and photo',
                   icon: Icons.add_circle_outline,
                   color: Colors.teal,
                   onTap: () {
@@ -207,7 +230,7 @@ class DashboardScreen extends StatelessWidget {
                 DashboardCardTile(
                   title: 'Manage Inventory',
                   subtitle:
-                      'Edit plant details, update prices, or remove products',
+                      'Edit product details, update prices, or remove products',
                   icon: Icons.inventory_2_outlined,
                   color: Colors.indigo,
                   onTap: () {

@@ -1,8 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import '../models/product_model.dart';
 
@@ -23,15 +24,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   final _stockController = TextEditingController();
+  final _weightController = TextEditingController();
   final _imageUrlController = TextEditingController();
 
   final List<String> _categories = [
-    'Indoor',
-    'Outdoor',
-    'Succulents',
-    'Flowering',
-    'Herbs',
-    'Pots & Tools',
+    'Fruits',
+    'Vegetables',
+    'Dairy & Eggs',
+    'Beverages',
+    'Bakery & Bread',
+    'Snacks & Chips',
+    'Meat & Seafood',
+    'Pantry & Staples',
+    'Household',
   ];
   late String _selectedCategory;
 
@@ -49,11 +54,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _descriptionController.text = p.description;
       _priceController.text = p.price.toString();
       _stockController.text = p.stock.toString();
+      _weightController.text = p.weight;
       _imageUrlController.text = p.imageUrl;
       _selectedCategory = _categories.contains(p.category) ? p.category : _categories.first;
     } else {
       _selectedCategory = _categories.first;
       _stockController.text = '10';
+      _weightController.text = '1 kg';
     }
   }
 
@@ -63,6 +70,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _descriptionController.dispose();
     _priceController.dispose();
     _stockController.dispose();
+    _weightController.dispose();
     _imageUrlController.dispose();
     super.dispose();
   }
@@ -86,19 +94,30 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
-  // Upload the selected image file to Firebase Storage
+  // Upload the selected image file to Free Cloud Hosting (no credit card required)
   Future<String> _uploadImageToStorage(XFile file) async {
-    final fileName = 'products/${DateTime.now().millisecondsSinceEpoch}_${file.name}';
-    final storageRef = FirebaseStorage.instance.ref().child(fileName);
+    final bytes = await file.readAsBytes();
+    final base64Image = base64Encode(bytes);
 
-    if (kIsWeb) {
-      final bytes = await file.readAsBytes();
-      final uploadTask = await storageRef.putData(bytes);
-      return await uploadTask.ref.getDownloadURL();
-    } else {
-      final uploadTask = await storageRef.putFile(File(file.path));
-      return await uploadTask.ref.getDownloadURL();
+    // Free ImgBB API key for seamless direct uploads
+    final uri = Uri.parse('https://api.imgbb.com/1/upload');
+    final response = await http.post(
+      uri,
+      body: {
+        'key': '2d6bb36c7a7267f561944ee789945037',
+        'image': base64Image,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
+      if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
+        // Direct permanent public image URL
+        return jsonResponse['data']['url'] as String;
+      }
     }
+
+    throw Exception('Failed to upload image (${response.statusCode}): ${response.body}');
   }
 
   // Save product to Cloud Firestore
@@ -123,9 +142,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
         'description': _descriptionController.text.trim(),
         'price': double.tryParse(_priceController.text.trim()) ?? 0.0,
         'stock': int.tryParse(_stockController.text.trim()) ?? 0,
+        'weight': _weightController.text.trim().isEmpty ? '1 unit' : _weightController.text.trim(),
         'category': _selectedCategory,
         'imageUrl': finalImageUrl,
         'image': finalImageUrl, // for customer app compatibility
+        'img': finalImageUrl, // for customer app HomeScreen compatibility
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -200,18 +221,44 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               ? Image.network(_pickedImage!.path, height: 180, width: double.infinity, fit: BoxFit.cover)
                               : Image.file(File(_pickedImage!.path), height: 180, width: double.infinity, fit: BoxFit.cover),
                         )
-                      else if (_imageUrlController.text.isNotEmpty)
+                      else if (_imageUrlController.text.trim().isNotEmpty &&
+                          (Uri.tryParse(_imageUrlController.text.trim())?.hasScheme ?? false))
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Image.network(
-                            _imageUrlController.text,
+                            _imageUrlController.text.trim(),
                             height: 180,
                             width: double.infinity,
                             fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                height: 180,
+                                color: Colors.grey.shade100,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                ),
+                              );
+                            },
                             errorBuilder: (context, error, stackTrace) => Container(
                               height: 180,
                               color: Colors.grey.shade200,
-                              child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.broken_image_outlined, size: 48, color: Colors.grey.shade500),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Unable to load image from URL',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         )
@@ -261,11 +308,26 @@ class _AddProductScreenState extends State<AddProductScreen> {
               TextFormField(
                 controller: _imageUrlController,
                 decoration: InputDecoration(
-                  labelText: 'Or Paste Image URL (Optional)',
+                  labelText: 'Or Paste Direct Image URL (https://...)',
+                  hintText: 'https://example.com/image.png',
                   prefixIcon: const Icon(Icons.link),
+                  suffixIcon: _imageUrlController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _imageUrlController.clear();
+                            setState(() {});
+                          },
+                        )
+                      : null,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                onChanged: (val) => setState(() {}),
+                onChanged: (val) {
+                  if (val.trim().isNotEmpty && _pickedImage != null) {
+                    _pickedImage = null; // Prioritize pasted URL if user types one
+                  }
+                  setState(() {});
+                },
               ),
               const SizedBox(height: 16),
 
@@ -273,9 +335,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  labelText: 'Product / Plant Title *',
-                  hintText: 'e.g., Monstera Deliciosa',
-                  prefixIcon: const Icon(Icons.local_florist),
+                  labelText: 'Product Title *',
+                  hintText: 'e.g., Organic Bananas 1kg, Fresh Whole Milk',
+                  prefixIcon: const Icon(Icons.shopping_basket_outlined),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 validator: (val) => (val == null || val.trim().isEmpty) ? 'Please enter a title' : null,
@@ -341,13 +403,26 @@ class _AddProductScreenState extends State<AddProductScreen> {
               ),
               const SizedBox(height: 16),
 
+              // Weight / Unit input
+              TextFormField(
+                controller: _weightController,
+                decoration: InputDecoration(
+                  labelText: 'Weight / Unit (e.g., 1 kg, 500g, 1L, 1 dozen) *',
+                  hintText: 'e.g., 1 kg',
+                  prefixIcon: const Icon(Icons.scale_outlined),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                validator: (val) => (val == null || val.trim().isEmpty) ? 'Please enter a weight or unit' : null,
+              ),
+              const SizedBox(height: 16),
+
               // Description input
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 4,
                 decoration: InputDecoration(
                   labelText: 'Description',
-                  hintText: 'Care tips, sunlight requirements, watering frequency...',
+                  hintText: 'Product details, ingredients, net weight, expiry info...',
                   alignLabelWithHint: true,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),

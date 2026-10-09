@@ -19,8 +19,13 @@ class OrderItemModel {
       productId: data['productId'] as String? ?? data['id'] as String? ?? '',
       title: data['title'] as String? ?? data['name'] as String? ?? 'Item',
       price: (data['price'] as num?)?.toDouble() ?? 0.0,
-      quantity: (data['quantity'] as num?)?.toInt() ?? 1,
-      imageUrl: data['imageUrl'] as String? ?? data['image'] as String? ?? '',
+      quantity: (data['quantity'] as num?)?.toInt() ??
+          (data['count'] as num?)?.toInt() ??
+          1,
+      imageUrl: data['imageUrl'] as String? ??
+          data['image'] as String? ??
+          data['img'] as String? ??
+          '',
     );
   }
 
@@ -63,7 +68,17 @@ class OrderModel {
   factory OrderModel.fromFirestore(Map<String, dynamic> data, String documentId) {
     // Parse order date safely
     DateTime parsedDate;
-    if (data['orderDate'] != null) {
+    if (data['placedAt'] != null) {
+      if (data['placedAt'] is String) {
+        parsedDate = DateTime.tryParse(data['placedAt'] as String) ?? DateTime.now();
+      } else {
+        try {
+          parsedDate = (data['placedAt']).toDate();
+        } catch (_) {
+          parsedDate = DateTime.now();
+        }
+      }
+    } else if (data['orderDate'] != null) {
       if (data['orderDate'] is String) {
         parsedDate = DateTime.tryParse(data['orderDate'] as String) ?? DateTime.now();
       } else {
@@ -97,12 +112,22 @@ class OrderModel {
           .toList();
     }
 
+    // Combine address and pin if pin exists
+    String fullAddress = data['shippingAddress'] as String? ?? data['address'] as String? ?? 'No address provided';
+    final pin = data['pin'] as String?;
+    if (pin != null && pin.isNotEmpty && !fullAddress.contains(pin)) {
+      fullAddress = '$fullAddress (PIN: $pin)';
+    }
+
     return OrderModel(
       id: documentId,
       userId: data['userId'] as String? ?? '',
-      customerName: data['customerName'] as String? ?? data['userName'] as String? ?? 'Guest Customer',
+      customerName: data['customerName'] as String? ??
+          data['userName'] as String? ??
+          data['userEmail'] as String? ??
+          'Customer',
       customerPhone: data['customerPhone'] as String? ?? data['phone'] as String? ?? 'N/A',
-      shippingAddress: data['shippingAddress'] as String? ?? data['address'] as String? ?? 'No address provided',
+      shippingAddress: fullAddress,
       totalAmount: (data['totalAmount'] as num?)?.toDouble() ??
           (data['total'] as num?)?.toDouble() ??
           0.0,

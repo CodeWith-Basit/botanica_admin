@@ -9,12 +9,17 @@ class ManageProductsScreen extends StatelessWidget {
   const ManageProductsScreen({super.key});
 
   // Delete product document from Firestore
-  Future<void> _deleteProduct(BuildContext context, ProductModel product) async {
+  Future<void> _deleteProduct(
+    BuildContext context,
+    ProductModel product,
+  ) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Product'),
-        content: Text('Are you sure you want to delete "${product.title}"? This cannot be undone.'),
+        content: Text(
+          'Are you sure you want to delete "${product.title}"? This cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -35,7 +40,10 @@ class ManageProductsScreen extends StatelessWidget {
     if (confirm == true) {
       try {
         // Delete document from 'products' collection
-        await FirebaseFirestore.instance.collection('products').doc(product.id).delete();
+        await FirebaseFirestore.instance
+            .collection('products')
+            .doc(product.id)
+            .delete();
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -59,12 +67,13 @@ class ManageProductsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormatter = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
+    final currencyFormatter = NumberFormat.currency(
+      symbol: '\$',
+      decimalDigits: 2,
+    );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Inventory'),
-      ),
+      appBar: AppBar(title: const Text('Manage Inventory')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
@@ -73,7 +82,7 @@ class ManageProductsScreen extends StatelessWidget {
           );
         },
         icon: const Icon(Icons.add),
-        label: const Text('Add Plant'),
+        label: const Text('Add Product'),
         backgroundColor: Colors.green.shade800,
         foregroundColor: Colors.white,
       ),
@@ -104,7 +113,11 @@ class ManageProductsScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.inventory_2_outlined, size: 70, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 70,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'No products found in catalog.',
@@ -112,7 +125,7 @@ class ManageProductsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Tap the button below to add your first plant!',
+                    'Tap the button below to add your first product!',
                     style: TextStyle(color: Colors.grey.shade600),
                   ),
                 ],
@@ -134,7 +147,9 @@ class ManageProductsScreen extends StatelessWidget {
 
               return Card(
                 elevation: 1.5,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(
@@ -148,18 +163,25 @@ class ManageProductsScreen extends StatelessWidget {
                                 width: 70,
                                 height: 70,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  width: 70,
-                                  height: 70,
-                                  color: Colors.grey.shade200,
-                                  child: const Icon(Icons.local_florist, color: Colors.grey),
-                                ),
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      width: 70,
+                                      height: 70,
+                                      color: Colors.grey.shade200,
+                                      child: const Icon(
+                                        Icons.shopping_basket_outlined,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
                               )
                             : Container(
                                 width: 70,
                                 height: 70,
                                 color: Colors.green.shade50,
-                                child: Icon(Icons.local_florist, color: Colors.green.shade700),
+                                child: Icon(
+                                  Icons.shopping_basket_outlined,
+                                  color: Colors.green.shade700,
+                                ),
                               ),
                       ),
                       const SizedBox(width: 14),
@@ -180,7 +202,7 @@ class ManageProductsScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${product.category} • Stock: ${product.stock}',
+                              '${product.category} • ${product.weight} • Stock: ${product.stock}',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey.shade600,
@@ -202,12 +224,16 @@ class ManageProductsScreen extends StatelessWidget {
                       // Edit Action
                       IconButton(
                         tooltip: 'Edit',
-                        icon: const Icon(Icons.edit_outlined, color: Colors.blueGrey),
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                          color: Colors.blueGrey,
+                        ),
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => AddProductScreen(existingProduct: product),
+                              builder: (context) =>
+                                  AddProductScreen(existingProduct: product),
                             ),
                           );
                         },
@@ -216,7 +242,10 @@ class ManageProductsScreen extends StatelessWidget {
                       // Delete Action
                       IconButton(
                         tooltip: 'Delete',
-                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.redAccent,
+                        ),
                         onPressed: () => _deleteProduct(context, product),
                       ),
                     ],

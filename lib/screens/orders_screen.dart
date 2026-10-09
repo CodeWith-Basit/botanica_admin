@@ -29,10 +29,14 @@ class OrdersScreen extends StatelessWidget {
     }
   }
 
-  // Update order status in Firestore
-  Future<void> _updateOrderStatus(BuildContext context, String orderId, String newStatus) async {
+  // Update order status in Firestore directly using the document reference
+  Future<void> _updateOrderStatus(
+    BuildContext context,
+    DocumentReference orderRef,
+    String newStatus,
+  ) async {
     try {
-      await FirebaseFirestore.instance.collection('orders').doc(orderId).update({
+      await orderRef.update({
         'status': newStatus,
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -58,17 +62,18 @@ class OrdersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormatter = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
+    final currencyFormatter = NumberFormat.currency(
+      symbol: '\$',
+      decimalDigits: 2,
+    );
     final dateFormatter = DateFormat('MMM dd, yyyy • hh:mm a');
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Customer Orders'),
-      ),
-      // Listen to real-time changes in the 'orders' collection
+      appBar: AppBar(title: const Text('Customer Orders')),
+      // Listen to real-time changes across all user 'orders' subcollections
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('orders')
+            .collectionGroup('orders')
             .snapshots(),
         builder: (context, snapshot) {
           // 1. Loading state
@@ -94,7 +99,11 @@ class OrdersScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.receipt_long_outlined, size: 70, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 70,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'No orders placed yet.',
@@ -102,7 +111,7 @@ class OrdersScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Customer orders will appear here automatically in real time.',
+                    'Customer orders will appear here\n        automatically in real time.',
                     style: TextStyle(color: Colors.grey.shade600),
                   ),
                 ],
@@ -126,7 +135,9 @@ class OrdersScreen extends StatelessWidget {
 
               return Card(
                 elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -146,11 +157,16 @@ class OrdersScreen extends StatelessWidget {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: statusColor.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: statusColor.withValues(alpha: 0.4)),
+                              border: Border.all(
+                                color: statusColor.withValues(alpha: 0.4),
+                              ),
                             ),
                             child: Text(
                               order.status,
@@ -166,14 +182,21 @@ class OrdersScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         dateFormatter.format(order.orderDate),
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                       const Divider(height: 20),
 
                       // Customer information
                       Row(
                         children: [
-                          const Icon(Icons.person_outline, size: 18, color: Colors.grey),
+                          const Icon(
+                            Icons.person_outline,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             order.customerName,
@@ -181,11 +204,18 @@ class OrdersScreen extends StatelessWidget {
                           ),
                           if (order.customerPhone != 'N/A') ...[
                             const SizedBox(width: 12),
-                            const Icon(Icons.phone_outlined, size: 16, color: Colors.grey),
+                            const Icon(
+                              Icons.phone_outlined,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               order.customerPhone,
-                              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade700,
+                              ),
                             ),
                           ],
                         ],
@@ -194,12 +224,19 @@ class OrdersScreen extends StatelessWidget {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 18, color: Colors.grey),
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               order.shippingAddress,
-                              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade700,
+                              ),
                             ),
                           ),
                         ],
@@ -219,22 +256,33 @@ class OrdersScreen extends StatelessWidget {
                             children: [
                               Text(
                                 'Items (${order.items.length})',
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               const SizedBox(height: 6),
                               ...order.items.map(
                                 (item) => Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 2.0),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 2.0,
+                                  ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         '${item.quantity}x ${item.title}',
                                         style: const TextStyle(fontSize: 13),
                                       ),
                                       Text(
-                                        currencyFormatter.format(item.price * item.quantity),
-                                        style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                                        currencyFormatter.format(
+                                          item.price * item.quantity,
+                                        ),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey.shade700,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -255,7 +303,10 @@ class OrdersScreen extends StatelessWidget {
                             children: [
                               const Text(
                                 'Total Amount',
-                                style: TextStyle(fontSize: 12, color: Colors.grey),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
                               ),
                               Text(
                                 currencyFormatter.format(order.totalAmount),
@@ -277,7 +328,9 @@ class OrdersScreen extends StatelessWidget {
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<String>(
-                                value: _statuses.contains(order.status) ? order.status : 'Pending',
+                                value: _statuses.contains(order.status)
+                                    ? order.status
+                                    : 'Pending',
                                 items: _statuses.map((s) {
                                   return DropdownMenuItem(
                                     value: s,
@@ -292,8 +345,13 @@ class OrdersScreen extends StatelessWidget {
                                   );
                                 }).toList(),
                                 onChanged: (newStatus) {
-                                  if (newStatus != null && newStatus != order.status) {
-                                    _updateOrderStatus(context, order.id, newStatus);
+                                  if (newStatus != null &&
+                                      newStatus != order.status) {
+                                    _updateOrderStatus(
+                                      context,
+                                      doc.reference,
+                                      newStatus,
+                                    );
                                   }
                                 },
                               ),

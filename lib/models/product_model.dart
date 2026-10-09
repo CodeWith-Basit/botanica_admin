@@ -7,6 +7,7 @@ class ProductModel {
   final String category;
   final String imageUrl;
   final int stock;
+  final String weight;
 
   ProductModel({
     required this.id,
@@ -16,6 +17,7 @@ class ProductModel {
     required this.category,
     required this.imageUrl,
     this.stock = 0,
+    this.weight = '1 unit',
   });
 
   // Convert Firestore document snapshot to ProductModel
@@ -26,8 +28,9 @@ class ProductModel {
       description: data['description'] as String? ?? '',
       price: (data['price'] as num?)?.toDouble() ?? 0.0,
       category: data['category'] as String? ?? 'General',
-      imageUrl: data['imageUrl'] as String? ?? data['image'] as String? ?? '',
+      imageUrl: data['imageUrl'] as String? ?? data['image'] as String? ?? data['img'] as String? ?? '',
       stock: (data['stock'] as num?)?.toInt() ?? 0,
+      weight: data['weight'] as String? ?? '1 unit',
     );
   }
 
@@ -41,7 +44,9 @@ class ProductModel {
       'category': category,
       'imageUrl': imageUrl,
       'image': imageUrl, // compatibility with existing apps
+      'img': imageUrl, // compatibility with customer app
       'stock': stock,
+      'weight': weight,
       'updatedAt': DateTime.now().toIso8601String(),
     };
   }
