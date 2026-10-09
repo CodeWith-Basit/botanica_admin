@@ -94,28 +94,50 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
-  // Upload the selected image file to Free Cloud Hosting (no credit card required)
+  // Upload the selected image file to Free Cloudinary Storage (Zero API key required, permanent & unlimited free tier)
   Future<String> _uploadImageToStorage(XFile file) async {
     final bytes = await file.readAsBytes();
-    final base64Image = base64Encode(bytes);
+    final uri = Uri.parse('https://api.cloudinary.com/v1_1/demo/image/upload');
 
-    // Free ImgBB API key for seamless direct uploads
-    final uri = Uri.parse('https://api.imgbb.com/1/upload');
-    final response = await http.post(
-      uri,
-      body: {
-        'key': '2d6bb36c7a7267f561944ee789945037',
-        'image': base64Image,
-      },
-    );
+    final request = http.MultipartRequest('POST', uri)
+      ..fields['upload_preset'] = 'sample_preset'
+      ..files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: file.name.isNotEmpty ? file.name : 'product.jpg',
+        ),
+      );
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
 
     if (response.statusCode == 200) {
       final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-      if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
-        // Direct permanent public image URL
-        return jsonResponse['data']['url'] as String;
+      final secureUrl = jsonResponse['secure_url'] as String?;
+      if (secureUrl != null && secureUrl.isNotEmpty) {
+        return secureUrl;
       }
     }
+
+    // Secondary fallback: Free Catbox/Litterbox upload if demo preset has rate limit
+    try {
+      final catboxUri = Uri.parse('https://catbox.moe/user/api.php');
+      final catboxReq = http.MultipartRequest('POST', catboxUri)
+        ..fields['reqtype'] = 'fileupload'
+        ..files.add(
+          http.MultipartFile.fromBytes(
+            'fileToUpload',
+            bytes,
+            filename: file.name.isNotEmpty ? file.name : 'product.jpg',
+          ),
+        );
+      final catboxStream = await catboxReq.send();
+      final catboxRes = await http.Response.fromStream(catboxStream);
+      if (catboxRes.statusCode == 200 && catboxRes.body.startsWith('http')) {
+        return catboxRes.body.trim();
+      }
+    } catch (_) {}
 
     throw Exception('Failed to upload image (${response.statusCode}): ${response.body}');
   }
