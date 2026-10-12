@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Promo video editing temporary files
+brag-output/
+source_video/
+
