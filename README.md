@@ -46,6 +46,38 @@ Add / Edit Product    ──▶    Catalog Updated     ──▶    Customer Ord
 
 ---
 
+## 📱 Admin App Screens
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="25%">
+        <img src="assets/media/admin_dashboard.png" alt="Admin Dashboard" width="220"/>
+        <br />
+        <b>Management Hub & Dashboard</b>
+      </td>
+      <td align="center" width="25%">
+        <img src="assets/media/admin_add_product.png" alt="Add Product" width="220"/>
+        <br />
+        <b>Add New Product</b>
+      </td>
+      <td align="center" width="25%">
+        <img src="assets/media/admin_edit_product.png" alt="Edit Product" width="220"/>
+        <br />
+        <b>Edit Inventory & Pricing</b>
+      </td>
+      <td align="center" width="25%">
+        <img src="assets/media/admin_order_management.png" alt="Customer Orders" width="220"/>
+        <br />
+        <b>Live Order Fulfillment</b>
+      </td>
+    </tr>
+  </table>
+</div>
+
+---
+
+
 ## 🛠️ Getting Started
 
 ### Prerequisites
